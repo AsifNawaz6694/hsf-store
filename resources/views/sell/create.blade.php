@@ -231,6 +231,9 @@
 									@lang('sale.price_inc_tax')
 								</th>
 								<th class="text-center">
+									Unit Price
+								</th>
+								<th class="text-center">
 									@lang('sale.subtotal')
 								</th>
 								<th class="text-center"><i class="fa fa-close" aria-hidden="true"></i></th>
@@ -249,6 +252,8 @@
 								&nbsp;&nbsp;&nbsp;&nbsp;
 								<b>@lang('sale.total'): </b>
 									<span class="price_total">0</span>
+
+
 								</div>
 							</td>
 						</tr>
