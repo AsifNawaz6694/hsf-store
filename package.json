@@ -11,6 +11,7 @@
     "format": "prettier --write 'public/js/*.{css,js,vue}'"
   },
   "devDependencies": {
+    "@babel/helper-compilation-targets": "^7.15.4",
     "axios": "^0.18.1",
     "cross-env": "^5.1",
     "jquery": "^3.4.1",
