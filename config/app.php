@@ -116,6 +116,7 @@ return [
     */
 
     'key' => env('APP_KEY', 'base64:W8UqtE9LHZW+gRag78o4BCbN1M0w4HdaIFdLqHJ/9PA='),
+    'personal_access_token_github' => env('github_personal_token', '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'),
 
     'cipher' => 'AES-256-CBC',
     
