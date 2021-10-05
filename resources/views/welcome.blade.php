@@ -8,6 +8,7 @@
                 display: flex;
                 justify-content: center;
                 margin-top: 10%;
+                text-align: center;
             }
         .title {
                 font-size: 84px;
@@ -19,7 +20,7 @@
             }
     </style>
     <div class="title flex-center" style="font-weight: 600 !important;">
-        {{ config('app.name', 'ultimatePOS') }}
+        {{ config('app.name', 'Hassan Sanitary & Fitting Store') }}
     </div>
     <p class="tagline">
         {{ env('APP_TITLE', '') }}
