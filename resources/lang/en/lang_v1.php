@@ -656,6 +656,7 @@ return [
     'variable' => 'Variable',
     'total_purchase_price' => 'Total purchase price',
     'total_sell_price' => 'Total sell price',
+    'delivery_challan' => 'Delivery Challan',
     'packing_slip' => 'Packing Slip',
     'use_superadmin_email_settings' => 'Use system email configurations',
     'profit_by_products' => 'Profit by products',
