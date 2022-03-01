@@ -5,7 +5,7 @@
   <section class="sidebar">
 
 	<a href="{{route('home')}}" class="logo">
-		<span class="logo-lg">asdasdad</span>
+		<span class="logo-lg">{{ Session::get('business.name') }}</span>
 	</a>
 
     <!-- Sidebar Menu -->
