@@ -5,11 +5,11 @@
   <section class="sidebar">
 
 	<a href="{{route('home')}}" class="logo">
-		<span class="logo-lg">{{ Session::get('business.name') }}</span>
+		<span class="logo-lg">asdas</span>
 	</a>
 
     <!-- Sidebar Menu -->
-    {!! Menu::render('admin-sidebar-menu', 'adminltecustom'); !!}
+    {!! Menu::render('adminltecustom', 'admin-sidebar-menu'); !!}
 
     <!-- /.sidebar-menu -->
   </section>
