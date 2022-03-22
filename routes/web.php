@@ -14,6 +14,7 @@
 include_once('install_r.php');
 
 Route::middleware(['setData'])->group(function () {
+    Route::get('/take-db-backup', 'UserController@takeDBBackup');
     Route::get('/', function () {
         return view('welcome');
     });
