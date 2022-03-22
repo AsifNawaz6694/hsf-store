@@ -6,6 +6,7 @@
 
 	<a href="{{route('home')}}" class="logo">
 		<span class="logo-lg">{{ Session::get('business.name') }}</span>
+		<span class="logo-lg">Here you go</span>
 	</a>
 
     <!-- Sidebar Menu -->

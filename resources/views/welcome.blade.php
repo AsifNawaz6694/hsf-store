@@ -20,7 +20,7 @@
             }
     </style>
     <div class="title flex-center" style="font-weight: 600 !important;">
-        {{ config('app.name', 'Hassan Sanitary & Fitting StoreHassan Sanitary & Fitting Store') }}
+        {{ config('app.name', 'Hassan Sanitary & Fitting Store') }}
     </div>
     <p class="tagline">
         {{ env('APP_TITLE', '') }}
