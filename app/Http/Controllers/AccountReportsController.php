@@ -185,6 +185,7 @@ class AccountReportsController extends Controller
                                     ->leftjoin('accounts as A', 'transaction_payments.account_id', '=', 'A.id')
                                     ->where('transaction_payments.business_id', $business_id)
                                     ->whereNull('transaction_payments.parent_id')
+                                    ->orderBy('paid_on','DESC')
                                     ->select([
                                         'paid_on',
                                         'payment_ref_no',
