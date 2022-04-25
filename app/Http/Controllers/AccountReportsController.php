@@ -226,10 +226,10 @@ class AccountReportsController extends Controller
                         
                         return $action;
                     })
-                    ->addColumn('amount', function ($row) {
+                    ->addColumn('account', function ($row) {
                         $account = '';
-                        if (!empty($row->amount)) {
-                            $account = $row->amount;
+                        if (!empty($row->account_id)) {
+                            $account = $row->account_name . ' - ' . $row->account_number;
                         }
                         return $account;
                     })

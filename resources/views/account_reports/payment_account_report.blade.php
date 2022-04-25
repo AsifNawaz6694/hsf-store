@@ -51,7 +51,7 @@
                                 <th>@lang('account.payment_ref_no')</th>
                                 <th>@lang('account.invoice_ref_no')</th>
                                 <th>@lang('lang_v1.payment_type')</th>
-                                <th>Amount</th>
+                                <th>@lang('account.account')</th>
                                 <th>@lang('messages.action')</th>
                             </tr>
                         </thead>
@@ -112,7 +112,7 @@
                                 {data: 'payment_ref_no', name: 'payment_ref_no'},
                                 {data: 'transaction_number', name: 'transaction_number'},
                                 {data: 'type', name: 'T.type'},
-                                {data: 'amount', name: 'amount'},
+                                {data: 'account', name: 'account'},
                                 {data: 'action', name: 'action'}
                             ],
                             "fnDrawCallback": function (oSettings) {
