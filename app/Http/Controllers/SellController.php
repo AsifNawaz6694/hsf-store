@@ -628,11 +628,11 @@ class SellController extends Controller
 
         //Check if the transaction can be edited or not.
         $edit_days = request()->session()->get('business.transaction_edit_days');
-        if (!$this->transactionUtil->canBeEdited($id, $edit_days)) {
-            return back()
-                ->with('status', ['success' => 0,
-                    'msg' => __('messages.transaction_edit_not_allowed', ['days' => $edit_days])]);
-        }
+//        if (!$this->transactionUtil->canBeEdited($id, $edit_days)) {
+//            return back()
+//                ->with('status', ['success' => 0,
+//                    'msg' => __('messages.transaction_edit_not_allowed', ['days' => $edit_days])]);
+//        }
 
         //Check if return exist then not allowed
         if ($this->transactionUtil->isReturnExist($id)) {

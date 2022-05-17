@@ -663,11 +663,11 @@ class SellPosController extends Controller
 
         //Check if the transaction can be edited or not.
         $edit_days = request()->session()->get('business.transaction_edit_days');
-        if (!$this->transactionUtil->canBeEdited($id, $edit_days)) {
-            return back()
-                ->with('status', ['success' => 0,
-                    'msg' => __('messages.transaction_edit_not_allowed', ['days' => $edit_days])]);
-        }
+//        if (!$this->transactionUtil->canBeEdited($id, $edit_days)) {
+//            return back()
+//                ->with('status', ['success' => 0,
+//                    'msg' => __('messages.transaction_edit_not_allowed', ['days' => $edit_days])]);
+//        }
 
         //Check if there is a open register, if no then redirect to Create Register screen.
         if ($this->cashRegisterUtil->countOpenedRegister() == 0) {
