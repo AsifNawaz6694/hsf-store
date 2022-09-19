@@ -553,7 +553,6 @@ class HomeController extends Controller
 
     public function dbBackup()
     {
-        dd(123);
         $dbname = 'hsf_store';
         $path = public_path('/database-backup');
         if (!file_exists($path)) {
