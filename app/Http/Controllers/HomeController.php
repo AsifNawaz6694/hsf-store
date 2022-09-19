@@ -15,6 +15,9 @@ use App\VariationLocationDetails;
 use Datatables;
 use DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\File;
+
 
 class HomeController extends Controller
 {
@@ -546,5 +549,26 @@ class HomeController extends Controller
                 'layout' => 'vertical'
             ],
         ];
+    }
+
+    public function dbBackup()
+    {
+        $dbname = 'hsf_store';
+        $path = public_path('/database-backup');
+        if (!file_exists($path)) {
+            mkdir($path);
+        }
+        $backup_file = $dbname . date("Y-m-d-H-i-s") . '.gz';
+        $command = "mysqldump --opt -h 127.0.0.1 -u root hsf_store | gzip > database-backup/$backup_file";
+        system($command);
+        $file = $path . '/' . $backup_file;
+        Mail::send([], [], function ($message) use ($file) {
+            $message->from('asiif23@gmail.com', 'Database Backup')
+                ->to('asiif23@gmail.com', 'Asif Nawaz')
+                ->cc('rabnawaz2186@gmail.com', 'Rab Nawaz')
+                ->attach($file)
+                ->subject('HSF Database Backup');
+        });
+        File::deleteDirectory($path);
     }
 }
