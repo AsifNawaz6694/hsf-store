@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Datatables;
 use DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\File;
 
@@ -48,9 +49,14 @@ class DBBackup extends Command
             mkdir($path);
         }
         $backup_file = $dbname . date("Y-m-d-H-i-s") . '.gz';
+        \Log::info($backup_file);
+        \Log::info('backup path');
         $command = "mysqldump --opt -h 127.0.0.1 -u root hsf_store | gzip > database-backup/$backup_file";
+
         system($command);
         $file = $path . '/' . $backup_file;
+        \Log::info($file);
+        \Log::info('backup file path');
         Mail::send([], [], function ($message) use ($file) {
             $message->from('asiif23@gmail.com', 'Database Backup')
                 ->to('asiif23@gmail.com', 'Asif Nawaz')
