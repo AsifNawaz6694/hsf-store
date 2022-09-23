@@ -559,9 +559,14 @@ class HomeController extends Controller
             mkdir($path);
         }
         $backup_file = $dbname . date("Y-m-d-H-i-s") . '.gz';
-        $command = "mysqldump --opt -h 127.0.0.1 -u root hsf_store | gzip > database-backup/$backup_file";
+        \Log::info($backup_file);
+        \Log::info('backup path');
+        $command = "mysqldump hsf_store | gzip > public/database-backup/$backup_file";
+
         system($command);
         $file = $path . '/' . $backup_file;
+        \Log::info($file);
+        \Log::info('backup file path');
         Mail::send([], [], function ($message) use ($file) {
             $message->from('asiif23@gmail.com', 'Database Backup')
                 ->to('asiif23@gmail.com', 'Asif Nawaz')
@@ -569,6 +574,7 @@ class HomeController extends Controller
                 ->attach($file)
                 ->subject('HSF Database Backup');
         });
-//        File::deleteDirectory($path);
+
+        File::deleteDirectory($path);
     }
 }

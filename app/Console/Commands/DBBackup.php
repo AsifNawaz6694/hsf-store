@@ -51,7 +51,7 @@ class DBBackup extends Command
         $backup_file = $dbname . date("Y-m-d-H-i-s") . '.gz';
         \Log::info($backup_file);
         \Log::info('backup path');
-        $command = "mysqldump --opt -h 127.0.0.1 -u root hsf_store | gzip > database-backup/$backup_file";
+        $command = "mysqldump hsf_store | gzip > public/database-backup/$backup_file";
 
         system($command);
         $file = $path . '/' . $backup_file;
@@ -66,4 +66,5 @@ class DBBackup extends Command
         });
         File::deleteDirectory($path);
     }
+
 }
