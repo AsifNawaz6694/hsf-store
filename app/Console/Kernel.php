@@ -26,7 +26,7 @@ class Kernel extends ConsoleKernel
     {
         $env = config('app.env');
         $email = config('mail.username');
-        $schedule->command('db:dbbackup')->everyMinute();
+        $schedule->command('create:dbbackup')->everyMinute();
 
         if ($env === 'live') {
             //Scheduling backup, specify the time when the backup will get cleaned & time when it will run.
