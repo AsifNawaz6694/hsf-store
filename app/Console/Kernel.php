@@ -26,11 +26,10 @@ class Kernel extends ConsoleKernel
     {
         $env = config('app.env');
         $email = config('mail.username');
-        $schedule->command('db:backup')->everyMinute();
+        $schedule->command('db:dbbackup')->everyMinute();
 
         if ($env === 'live') {
             //Scheduling backup, specify the time when the backup will get cleaned & time when it will run.
-            $schedule->command('db:backup')->everyMinute();
             //$schedule->command('db:backup')->dailyAt('23:50');
 
             //Schedule to create recurring invoices
