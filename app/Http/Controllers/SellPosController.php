@@ -989,9 +989,10 @@ class SellPosController extends Controller
                 $user_id = $request->session()->get('user.id');
                 $commsn_agnt_setting = $request->session()->get('business.sales_cmsn_agnt');
 
-                $discount = ['discount_type' => $input['discount_type'] ? $input['discount_type'] : null,
-                                'discount_amount' => $input['discount_amount'] ? $input['discount_amount'] : null
-                            ];
+//                $discount = ['discount_type' => $input['discount_type'] ? $input['discount_type'] : null,
+//                                'discount_amount' => $input['discount_amount'] ? $input['discount_amount'] : null
+//                            ];
+                $discount = 0;
                 $invoice_total = $this->productUtil->calculateInvoiceTotal($input['products'], $input['tax_rate_id'], $discount);
 
                 if (!empty($request->input('transaction_date'))) {
