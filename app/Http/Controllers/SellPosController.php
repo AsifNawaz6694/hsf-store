@@ -288,9 +288,9 @@ class SellPosController extends Controller
             $input = $request->except('_token');
 
             //Check Customer credit limit
-            //$is_credit_limit_exeeded = $this->transactionUtil->isCustomerCreditLimitExeeded($input);
+            $is_credit_limit_exeeded = $this->transactionUtil->isCustomerCreditLimitExeeded($input);
 
-            if (isset($is_credit_limit_exeeded) && $is_credit_limit_exeeded !== false) {
+            if ($is_credit_limit_exeeded !== false) {
                 $credit_limit_amount = $this->transactionUtil->num_f($is_credit_limit_exeeded, true);
                 $output = ['success' => 0,
                             'msg' => __('lang_v1.cutomer_credit_limit_exeeded', ['credit_limit' => $credit_limit_amount])
@@ -527,7 +527,6 @@ class SellPosController extends Controller
                         ];
             }
         } catch (\Exception $e) {
-            dd($e);
             DB::rollBack();
             \Log::emergency("File:" . $e->getFile(). "Line:" . $e->getLine(). "Message:" . $e->getMessage());
             $msg = trans("messages.something_went_wrong");
@@ -964,9 +963,9 @@ class SellPosController extends Controller
                 }
 
                 //Check Customer credit limit
-                //$is_credit_limit_exeeded = $this->transactionUtil->isCustomerCreditLimitExeeded($input, $id);
+                $is_credit_limit_exeeded = $this->transactionUtil->isCustomerCreditLimitExeeded($input, $id);
 
-                if (isset($is_credit_limit_exeeded) && $is_credit_limit_exeeded !== false) {
+                if ($is_credit_limit_exeeded !== false) {
                     $credit_limit_amount = $this->transactionUtil->num_f($is_credit_limit_exeeded, true);
                     $output = ['success' => 0,
                                 'msg' => __('lang_v1.cutomer_credit_limit_exeeded', ['credit_limit' => $credit_limit_amount])
@@ -989,12 +988,10 @@ class SellPosController extends Controller
                 $user_id = $request->session()->get('user.id');
                 $commsn_agnt_setting = $request->session()->get('business.sales_cmsn_agnt');
 
-//                $discount = ['discount_type' => $input['discount_type'] ? $input['discount_type'] : null,
-//                                'discount_amount' => $input['discount_amount'] ? $input['discount_amount'] : null
-//                            ];
-                $discount = 0;
-                $tax_rate_id = isset($input['tax_rate_id']) ?? 0;
-                $invoice_total = $this->productUtil->calculateInvoiceTotal($input['products'], $tax_rate_id, $discount);
+                $discount = ['discount_type' => $input['discount_type'],
+                                'discount_amount' => $input['discount_amount']
+                            ];
+                $invoice_total = $this->productUtil->calculateInvoiceTotal($input['products'], $input['tax_rate_id'], $discount);
 
                 if (!empty($request->input('transaction_date'))) {
                     $input['transaction_date'] = $this->productUtil->uf_date($request->input('transaction_date'), true);
@@ -1165,7 +1162,6 @@ class SellPosController extends Controller
                         ];
             }
         } catch (\Exception $e) {
-            dd($e);
             DB::rollBack();
             \Log::emergency("File:" . $e->getFile(). "Line:" . $e->getLine(). "Message:" . $e->getMessage());
             $output = ['success' => 0,
