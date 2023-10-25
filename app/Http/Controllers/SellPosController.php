@@ -270,7 +270,6 @@ class SellPosController extends Controller
      */
     public function store(Request $request)
     {
-        dd(123);
         if (!auth()->user()->can('sell.create') && !auth()->user()->can('direct_sell.access')) {
             abort(403, 'Unauthorized action.');
         }
@@ -967,7 +966,7 @@ class SellPosController extends Controller
                 //Check Customer credit limit
                 $is_credit_limit_exeeded = $this->transactionUtil->isCustomerCreditLimitExeeded($input, $id);
 
-                if ($is_credit_limit_exeeded !== false) {
+                if (isset($is_credit_limit_exeeded) && $is_credit_limit_exeeded !== false) {
                     $credit_limit_amount = $this->transactionUtil->num_f($is_credit_limit_exeeded, true);
                     $output = ['success' => 0,
                                 'msg' => __('lang_v1.cutomer_credit_limit_exeeded', ['credit_limit' => $credit_limit_amount])
