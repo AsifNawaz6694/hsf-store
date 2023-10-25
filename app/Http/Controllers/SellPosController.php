@@ -964,7 +964,7 @@ class SellPosController extends Controller
                 }
 
                 //Check Customer credit limit
-                $is_credit_limit_exeeded = $this->transactionUtil->isCustomerCreditLimitExeeded($input, $id);
+                //$is_credit_limit_exeeded = $this->transactionUtil->isCustomerCreditLimitExeeded($input, $id);
 
                 if (isset($is_credit_limit_exeeded) && $is_credit_limit_exeeded !== false) {
                     $credit_limit_amount = $this->transactionUtil->num_f($is_credit_limit_exeeded, true);
