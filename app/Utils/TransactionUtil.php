@@ -130,6 +130,7 @@ class TransactionUtil extends Util
             $invoice_scheme_id = !empty($input['invoice_scheme_id']) ? $input['invoice_scheme_id'] : null;
             $invoice_no = $this->getInvoiceNumber($business_id, $input['status'], $transaction->location_id, $invoice_scheme_id);
         }
+        dd($uf_data);
         $final_total = $uf_data ? $this->num_uf($input['final_total']) : $input['final_total'];
         $update_date = [
             'status' => $input['status'],
