@@ -288,9 +288,9 @@ class SellPosController extends Controller
             $input = $request->except('_token');
 
             //Check Customer credit limit
-            $is_credit_limit_exeeded = $this->transactionUtil->isCustomerCreditLimitExeeded($input);
+            //$is_credit_limit_exeeded = $this->transactionUtil->isCustomerCreditLimitExeeded($input);
 
-            if ($is_credit_limit_exeeded !== false) {
+            if (isset($is_credit_limit_exeeded) && $is_credit_limit_exeeded !== false) {
                 $credit_limit_amount = $this->transactionUtil->num_f($is_credit_limit_exeeded, true);
                 $output = ['success' => 0,
                             'msg' => __('lang_v1.cutomer_credit_limit_exeeded', ['credit_limit' => $credit_limit_amount])
