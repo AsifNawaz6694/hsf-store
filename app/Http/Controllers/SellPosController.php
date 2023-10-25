@@ -941,7 +941,7 @@ class SellPosController extends Controller
         }
         
         try {
-            dd($request->all());
+            dd($request);
             $input = $request->except('_token');
 
             //status is send as quotation from edit sales screen.
