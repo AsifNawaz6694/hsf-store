@@ -993,7 +993,7 @@ class SellPosController extends Controller
 //                                'discount_amount' => $input['discount_amount'] ? $input['discount_amount'] : null
 //                            ];
                 $discount = 0;
-                $invoice_total = $this->productUtil->calculateInvoiceTotal($input['products'], $input['tax_rate_id'], $discount);
+                $invoice_total = $this->productUtil->calculateInvoiceTotal($input['products'], 0, $discount);
 
                 if (!empty($request->input('transaction_date'))) {
                     $input['transaction_date'] = $this->productUtil->uf_date($request->input('transaction_date'), true);
