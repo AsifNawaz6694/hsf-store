@@ -12,7 +12,6 @@
 */
 
 include_once('install_r.php');
-Route::get('logs', [\Rap2hpoutre\LaravelLogViewer\LogViewerController::class, 'index']);
 
 Route::middleware(['setData'])->group(function () {
     Route::get('/take-db-backup', 'UserController@takeDBBackup');
