@@ -130,4 +130,8 @@ LANG = {
     'documents_and_notes' : 'Documents & Note',
     'invoices': 'Invoices',
     'settings' : 'Settings',
+    'clear_all_dues_confirm' : 'This will create write-off payments and mark all pending invoices as paid. Are you sure you want to clear all dues for this customer?',
+    'clear_all_invoices_confirm' : 'WARNING: This will delete all sales, returns, and payment records for this customer. The customer record will remain but all transaction data will be removed. This action cannot be easily undone. Are you sure?',
+    'bulk_clear_dues_confirm' : 'This will create write-off payments and mark all pending invoices as paid for :count selected customer(s). Are you sure?',
+    'no_customer_selected' : 'No customer selected',
 };

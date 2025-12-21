@@ -2,13 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\AccountTransaction;
 use App\Business;
 use App\BusinessLocation;
+use App\CashRegisterTransaction;
 use App\Contact;
 use App\CustomerGroup;
 use App\Notifications\CustomerNotification;
 use App\PurchaseLine;
 use App\Transaction;
+use App\TransactionPayment;
+use App\TransactionSellLine;
 use App\User;
 use App\Utils\ContactUtil;
 use App\Utils\ModuleUtil;
@@ -266,7 +270,15 @@ class ContactController extends Controller
                         ])
                     ->groupBy('contacts.id');
 
+        // Filter customers with pending payments
+        if (!empty(request()->has_pending_payments)) {
+            $query->havingRaw("(total_invoice - invoice_received) > 0");
+        }
+
         $contacts = Datatables::of($query)
+            ->addColumn('checkbox', function ($row) {
+                return '<input type="checkbox" class="customer_checkbox" value="' . $row->id . '">';
+            })
             ->addColumn('address', '{{implode(", ", array_filter([$address_line_1, $address_line_2, $city, $state, $country]))}}')
             ->addColumn(
                 'due',
@@ -361,6 +373,26 @@ class ContactController extends Controller
                                 </a>
                             </li>';
                     }
+
+                    // Clear dues and invoices actions
+                    $html .= '<li class="divider"></li>';
+                    if (auth()->user()->can('customer.update')) {
+                        $html .= '<li>
+                            <a href="' . action('ContactController@clearAllDues', [$row->id]) . '" class="clear_all_dues">
+                                <i class="fas fa-eraser" aria-hidden="true"></i>
+                                ' . __("lang_v1.clear_all_dues") . '
+                            </a>
+                        </li>';
+                    }
+                    if (auth()->user()->can('customer.delete')) {
+                        $html .= '<li>
+                            <a href="' . action('ContactController@clearAllInvoices', [$row->id]) . '" class="clear_all_invoices">
+                                <i class="fas fa-trash-alt" aria-hidden="true"></i>
+                                ' . __("lang_v1.clear_all_invoices") . '
+                            </a>
+                        </li>';
+                    }
+
                     $html .= '</ul></div>';
 
                     return $html;
@@ -412,7 +444,7 @@ class ContactController extends Controller
         if (!$reward_enabled) {
             $contacts->removeColumn('total_rp');
         }
-        return $contacts->rawColumns(['action', 'opening_balance', 'credit_limit', 'pay_term', 'due', 'return_due', 'name'])
+        return $contacts->rawColumns(['checkbox', 'action', 'opening_balance', 'credit_limit', 'pay_term', 'due', 'return_due', 'name'])
                         ->make(true);
     }
 
@@ -1360,5 +1392,272 @@ class ContactController extends Controller
 
         return view('contact.contact_map')
              ->with(compact('contacts', 'all_contacts'));
+    }
+
+    /**
+     * Clear all dues for a customer by creating write-off payments
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function clearAllDues($id)
+    {
+        if (!auth()->user()->can('customer.update')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        if (request()->ajax()) {
+            try {
+                $business_id = request()->session()->get('user.business_id');
+
+                // Verify contact belongs to this business and is a customer
+                $contact = Contact::where('business_id', $business_id)
+                    ->whereIn('type', ['customer', 'both'])
+                    ->findOrFail($id);
+
+                DB::beginTransaction();
+
+                // Get all transactions with pending payments for this customer
+                $transactions = Transaction::where('contact_id', $id)
+                    ->where('business_id', $business_id)
+                    ->whereIn('type', ['sell', 'sell_return', 'opening_balance'])
+                    ->whereIn('payment_status', ['due', 'partial'])
+                    ->get();
+
+                $cleared_count = 0;
+
+                foreach ($transactions as $transaction) {
+                    // Calculate remaining due amount
+                    $total_paid = TransactionPayment::where('transaction_id', $transaction->id)
+                        ->sum(DB::raw("IF(is_return = 1, -1*amount, amount)"));
+
+                    $due_amount = $transaction->final_total - $total_paid;
+
+                    if ($due_amount > 0) {
+                        // Create write-off payment
+                        TransactionPayment::create([
+                            'transaction_id' => $transaction->id,
+                            'business_id' => $business_id,
+                            'amount' => $due_amount,
+                            'method' => 'other',
+                            'note' => __('lang_v1.dues_cleared_by_admin'),
+                            'paid_on' => \Carbon\Carbon::now(),
+                            'created_by' => auth()->id(),
+                        ]);
+
+                        $cleared_count++;
+                    }
+
+                    // Update payment status to paid
+                    $transaction->payment_status = 'paid';
+                    $transaction->save();
+                }
+
+                DB::commit();
+
+                $output = [
+                    'success' => true,
+                    'msg' => __('lang_v1.all_dues_cleared_successfully', ['count' => $cleared_count])
+                ];
+            } catch (\Exception $e) {
+                DB::rollBack();
+                \Log::emergency("File:" . $e->getFile() . "Line:" . $e->getLine() . "Message:" . $e->getMessage());
+
+                $output = [
+                    'success' => false,
+                    'msg' => __('messages.something_went_wrong')
+                ];
+            }
+
+            return $output;
+        }
+    }
+
+    /**
+     * Bulk clear all dues for multiple customers
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function bulkClearDues()
+    {
+        if (!auth()->user()->can('customer.update')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        if (request()->ajax()) {
+            try {
+                $business_id = request()->session()->get('user.business_id');
+                $customer_ids = request()->input('customer_ids', []);
+
+                if (empty($customer_ids)) {
+                    return [
+                        'success' => false,
+                        'msg' => __('lang_v1.no_customer_selected')
+                    ];
+                }
+
+                // Verify all contacts belong to this business and are customers
+                $valid_customer_ids = Contact::where('business_id', $business_id)
+                    ->whereIn('type', ['customer', 'both'])
+                    ->whereIn('id', $customer_ids)
+                    ->pluck('id')
+                    ->toArray();
+
+                if (empty($valid_customer_ids)) {
+                    return [
+                        'success' => false,
+                        'msg' => __('messages.something_went_wrong')
+                    ];
+                }
+
+                DB::beginTransaction();
+
+                $total_cleared_count = 0;
+                $customers_processed = 0;
+
+                foreach ($valid_customer_ids as $customer_id) {
+                    // Get all transactions with pending payments for this customer
+                    $transactions = Transaction::where('contact_id', $customer_id)
+                        ->where('business_id', $business_id)
+                        ->whereIn('type', ['sell', 'sell_return', 'opening_balance'])
+                        ->whereIn('payment_status', ['due', 'partial'])
+                        ->get();
+
+                    foreach ($transactions as $transaction) {
+                        // Calculate remaining due amount
+                        $total_paid = TransactionPayment::where('transaction_id', $transaction->id)
+                            ->sum(DB::raw("IF(is_return = 1, -1*amount, amount)"));
+
+                        $due_amount = $transaction->final_total - $total_paid;
+
+                        if ($due_amount > 0) {
+                            // Create write-off payment
+                            TransactionPayment::create([
+                                'transaction_id' => $transaction->id,
+                                'business_id' => $business_id,
+                                'amount' => $due_amount,
+                                'method' => 'other',
+                                'note' => __('lang_v1.dues_cleared_by_admin'),
+                                'paid_on' => \Carbon\Carbon::now(),
+                                'created_by' => auth()->id(),
+                            ]);
+
+                            $total_cleared_count++;
+                        }
+
+                        // Update payment status to paid
+                        $transaction->payment_status = 'paid';
+                        $transaction->save();
+                    }
+
+                    $customers_processed++;
+                }
+
+                DB::commit();
+
+                $output = [
+                    'success' => true,
+                    'msg' => __('lang_v1.bulk_dues_cleared_successfully', [
+                        'customers' => $customers_processed,
+                        'invoices' => $total_cleared_count
+                    ])
+                ];
+            } catch (\Exception $e) {
+                DB::rollBack();
+                \Log::emergency("File:" . $e->getFile() . "Line:" . $e->getLine() . "Message:" . $e->getMessage());
+
+                $output = [
+                    'success' => false,
+                    'msg' => __('messages.something_went_wrong')
+                ];
+            }
+
+            return $output;
+        }
+    }
+
+    /**
+     * Clear all invoices (soft delete all transactions) for a customer
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function clearAllInvoices($id)
+    {
+        if (!auth()->user()->can('customer.delete')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        if (request()->ajax()) {
+            try {
+                $business_id = request()->session()->get('user.business_id');
+
+                // Verify contact belongs to this business and is a customer
+                $contact = Contact::where('business_id', $business_id)
+                    ->whereIn('type', ['customer', 'both'])
+                    ->findOrFail($id);
+
+                DB::beginTransaction();
+
+                // Get all transaction IDs for this customer
+                $transaction_ids = Transaction::where('contact_id', $id)
+                    ->where('business_id', $business_id)
+                    ->whereIn('type', ['sell', 'sell_return', 'opening_balance'])
+                    ->pluck('id')
+                    ->toArray();
+
+                if (empty($transaction_ids)) {
+                    $output = [
+                        'success' => true,
+                        'msg' => __('lang_v1.no_invoices_to_clear')
+                    ];
+                    return $output;
+                }
+
+                // Get all payment IDs for these transactions
+                $payment_ids = TransactionPayment::whereIn('transaction_id', $transaction_ids)
+                    ->pluck('id')
+                    ->toArray();
+
+                // IMPORTANT: Delete in correct order (children first to avoid cascade hard delete)
+
+                // 1. Soft delete cash register transactions
+                CashRegisterTransaction::whereIn('transaction_id', $transaction_ids)->delete();
+
+                // 2. Soft delete account transactions (via payment_id)
+                if (!empty($payment_ids)) {
+                    AccountTransaction::whereIn('transaction_payment_id', $payment_ids)->delete();
+                }
+
+                // 3. Soft delete account transactions (via transaction_id)
+                AccountTransaction::whereIn('transaction_id', $transaction_ids)->delete();
+
+                // 4. Soft delete transaction payments
+                TransactionPayment::whereIn('transaction_id', $transaction_ids)->delete();
+
+                // 5. Soft delete transaction sell lines
+                TransactionSellLine::whereIn('transaction_id', $transaction_ids)->delete();
+
+                // 6. Finally, soft delete transactions
+                Transaction::whereIn('id', $transaction_ids)->delete();
+
+                DB::commit();
+
+                $output = [
+                    'success' => true,
+                    'msg' => __('lang_v1.all_invoices_cleared_successfully', ['count' => count($transaction_ids)])
+                ];
+            } catch (\Exception $e) {
+                DB::rollBack();
+                \Log::emergency("File:" . $e->getFile() . "Line:" . $e->getLine() . "Message:" . $e->getMessage());
+
+                $output = [
+                    'success' => false,
+                    'msg' => __('messages.something_went_wrong')
+                ];
+            }
+
+            return $output;
+        }
     }
 }

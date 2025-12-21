@@ -191,6 +191,41 @@ class Contact extends Authenticatable
     }
 
     /**
+     * Return list of customers with pending payments (due or partial)
+     *
+     * @param $business_id int
+     * @param $prepend_none = true (boolean)
+     *
+     * @return array customers with pending payments
+     */
+    public static function customersWithPendingPayments($business_id, $prepend_none = true)
+    {
+        $customers = Contact::where('contacts.business_id', $business_id)
+                        ->whereIn('contacts.type', ['customer', 'both'])
+                        ->active()
+                        ->join('transactions', function ($join) use ($business_id) {
+                            $join->on('contacts.id', '=', 'transactions.contact_id')
+                                ->where('transactions.business_id', '=', $business_id)
+                                ->where('transactions.type', '=', 'sell')
+                                ->where('transactions.status', '=', 'final')
+                                ->whereIn('transactions.payment_status', ['due', 'partial'])
+                                ->whereNull('transactions.deleted_at');
+                        })
+                        ->select(
+                            'contacts.id',
+                            DB::raw("IF(contacts.contact_id IS NULL OR contacts.contact_id='', contacts.name, CONCAT(contacts.name, ' (', contacts.contact_id, ')')) AS customer")
+                        )
+                        ->groupBy('contacts.id')
+                        ->pluck('customer', 'id');
+
+        if ($prepend_none) {
+            $customers = $customers->prepend(__('lang_v1.all'), '');
+        }
+
+        return $customers;
+    }
+
+    /**
      * Return list of contact type by permissions.
      *
      * @return array

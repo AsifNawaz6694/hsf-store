@@ -56,6 +56,9 @@ Route::middleware(['setData', 'auth', 'SetSessionData', 'language', 'timezone', 
 
     Route::get('/contacts/map', 'ContactController@contactMap');
     Route::get('/contacts/update-status/{id}', 'ContactController@updateStatus');
+    Route::get('/contacts/clear-dues/{id}', 'ContactController@clearAllDues');
+    Route::get('/contacts/clear-invoices/{id}', 'ContactController@clearAllInvoices');
+    Route::post('/contacts/bulk-clear-dues', 'ContactController@bulkClearDues');
     Route::get('/contacts/stock-report/{supplier_id}', 'ContactController@getSupplierStockReport');
     Route::get('/contacts/ledger', 'ContactController@getLedger');
     Route::post('/contacts/send-ledger', 'ContactController@sendLedger');

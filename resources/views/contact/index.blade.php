@@ -23,6 +23,20 @@
 <!-- Main content -->
 <section class="content">
     <input type="hidden" value="{{$type}}" id="contact_type">
+    @if($type == 'customer')
+    @component('components.filters', ['title' => __('report.filters')])
+        <div class="col-md-3">
+            <div class="form-group">
+                <div class="checkbox">
+                    <label>
+                        <input type="checkbox" id="has_pending_payments" value="1">
+                        @lang('lang_v1.customers_with_pending')
+                    </label>
+                </div>
+            </div>
+        </div>
+    @endcomponent
+    @endif
     @component('components.widget', ['class' => 'box-primary', 'title' => __( 'contact.all_your_contact', ['contacts' => __('lang_v1.'.$type.'s') ])])
         @if(auth()->user()->can('supplier.create') || auth()->user()->can('customer.create'))
             @slot('tool')
@@ -35,13 +49,28 @@
             @endslot
         @endif
         @if(auth()->user()->can('supplier.view') || auth()->user()->can('customer.view'))
+            @if($type == 'customer')
+            <div class="row" id="bulk_action_container" style="display: none;">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <button type="button" class="btn btn-warning" id="bulk_clear_dues_btn">
+                            <i class="fas fa-eraser"></i> @lang('lang_v1.clear_dues_for_selected')
+                        </button>
+                        <span id="selected_count" class="text-muted" style="margin-left: 10px;"></span>
+                    </div>
+                </div>
+            </div>
+            @endif
             <div class="table-responsive">
                 <table class="table table-bordered table-striped" id="contact_table">
                     <thead>
                         <tr>
+                            @if($type == 'customer')
+                                <th><input type="checkbox" id="select_all_customers"></th>
+                            @endif
                             <th>@lang('messages.action')</th>
                             <th>@lang('lang_v1.contact_id')</th>
-                            @if($type == 'supplier') 
+                            @if($type == 'supplier')
                                 <th>@lang('business.business_name')</th>
                                 <th>@lang('contact.name')</th>
                                 <th>@lang('business.email')</th>

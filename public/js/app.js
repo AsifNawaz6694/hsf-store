@@ -379,6 +379,7 @@ $(document).ready(function() {
         ];
     } else if (contact_table_type == 'customer') {
         var columns = [
+            { data: 'checkbox', searchable: false, orderable: false },
             { data: 'action', searchable: false, orderable: false },
             { data: 'contact_id', name: 'contact_id' },
             { data: 'name', name: 'name' },
@@ -412,6 +413,9 @@ $(document).ready(function() {
             "url": "/contacts",
             "data": function ( d ) {
                 d.type = $('#contact_type').val();
+                if ($('#has_pending_payments').is(':checked')) {
+                    d.has_pending_payments = 1;
+                }
                 d = __datatable_ajax_callback(d);
             }
         },
@@ -425,6 +429,88 @@ $(document).ready(function() {
             $('#footer_contact_return_due').text(total_return_due);
             __currency_convert_recursively($('#contact_table'));
         },
+    });
+
+    // Filter customers with pending payments
+    $(document).on('change', '#has_pending_payments', function() {
+        if (typeof contact_table !== 'undefined') {
+            contact_table.ajax.reload();
+        }
+    });
+
+    // Select all customers checkbox
+    $(document).on('change', '#select_all_customers', function() {
+        var isChecked = $(this).is(':checked');
+        $('.customer_checkbox').prop('checked', isChecked);
+        updateBulkActionVisibility();
+    });
+
+    // Individual customer checkbox change
+    $(document).on('change', '.customer_checkbox', function() {
+        updateBulkActionVisibility();
+        // Update select all checkbox state
+        var totalCheckboxes = $('.customer_checkbox').length;
+        var checkedCheckboxes = $('.customer_checkbox:checked').length;
+        $('#select_all_customers').prop('checked', totalCheckboxes === checkedCheckboxes && totalCheckboxes > 0);
+    });
+
+    // Function to update bulk action button visibility
+    function updateBulkActionVisibility() {
+        var checkedCount = $('.customer_checkbox:checked').length;
+        if (checkedCount > 0) {
+            $('#bulk_action_container').show();
+            $('#selected_count').text(checkedCount + ' ' + LANG.customer + '(s) selected');
+        } else {
+            $('#bulk_action_container').hide();
+            $('#selected_count').text('');
+        }
+    }
+
+    // Bulk clear dues button click
+    $(document).on('click', '#bulk_clear_dues_btn', function() {
+        var selectedIds = [];
+        $('.customer_checkbox:checked').each(function() {
+            selectedIds.push($(this).val());
+        });
+
+        if (selectedIds.length === 0) {
+            toastr.warning(LANG.no_customer_selected || 'No customer selected');
+            return;
+        }
+
+        var confirmText = LANG.bulk_clear_dues_confirm || 'This will create write-off payments and mark all pending invoices as paid for :count selected customer(s). Are you sure?';
+        swal({
+            title: LANG.sure,
+            text: confirmText.replace(':count', selectedIds.length),
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+        }).then((confirmed) => {
+            if (confirmed) {
+                $.ajax({
+                    url: '/contacts/bulk-clear-dues',
+                    method: 'POST',
+                    data: {
+                        customer_ids: selectedIds,
+                        _token: $('meta[name="csrf-token"]').attr('content')
+                    },
+                    dataType: 'json',
+                    success: function(data) {
+                        if (data.success == true) {
+                            toastr.success(data.msg);
+                            contact_table.ajax.reload();
+                            $('#select_all_customers').prop('checked', false);
+                            updateBulkActionVisibility();
+                        } else {
+                            toastr.error(data.msg);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        toastr.error(LANG.something_went_wrong);
+                    }
+                });
+            }
+        });
     });
 
     //On display of add contact modal
@@ -2464,6 +2550,72 @@ $(document).on('click', 'a.update_contact_status', function(e){
                 toastr.error(data.msg);
             }
         },
+    });
+});
+
+// Clear all dues for a customer
+$(document).on('click', 'a.clear_all_dues', function(e){
+    e.preventDefault();
+    var href = $(this).attr('href');
+    swal({
+        title: LANG.sure,
+        text: LANG.clear_all_dues_confirm,
+        icon: "warning",
+        buttons: true,
+        dangerMode: true,
+    }).then((confirmed) => {
+        if (confirmed) {
+            $.ajax({
+                url: href,
+                dataType: 'json',
+                success: function(data) {
+                    if (data.success == true) {
+                        toastr.success(data.msg);
+                        if (typeof contact_table !== 'undefined') {
+                            contact_table.ajax.reload();
+                        }
+                    } else {
+                        toastr.error(data.msg);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    toastr.error(LANG.something_went_wrong);
+                }
+            });
+        }
+    });
+});
+
+// Clear all invoices for a customer
+$(document).on('click', 'a.clear_all_invoices', function(e){
+    e.preventDefault();
+    var href = $(this).attr('href');
+    swal({
+        title: LANG.sure,
+        text: LANG.clear_all_invoices_confirm,
+        icon: "warning",
+        buttons: true,
+        dangerMode: true,
+    }).then((confirmed) => {
+        if (confirmed) {
+            $.ajax({
+                url: href,
+                dataType: 'json',
+                success: function(data) {
+                    if (data.success == true) {
+                        toastr.success(data.msg);
+                        if (typeof contact_table !== 'undefined') {
+                            contact_table.ajax.reload();
+                        }
+                    } else {
+                        toastr.error(data.msg);
+                    }
+                },
+                error: function(xhr, status, error) {
+                    toastr.error(LANG.something_went_wrong);
+                }
+            });
+        }
     });
 });
 
